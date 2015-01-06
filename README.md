@@ -2,12 +2,12 @@
 ====
 
 K&R exercise 1-23, with correct (as far as I can see) handling of
-trigraphs and line splices. This file is intended to be an informative
-testcase.
+trigraphs and line splices. This file is intended to be an
+informative testcase.
 
-Write a program to remove all comments from a C program. Don't forget to
-handle quotes strings and character constants properly. C comments don't
-nest.
+Write a program to remove all comments from a C program. Don't forget
+to handle quoted strings and character constants properly. C comments
+don't nest.
 
 In the days of K&R C, the block style of comment was the only style.
 
