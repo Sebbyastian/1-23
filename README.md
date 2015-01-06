@@ -87,6 +87,7 @@ So, '/* this isn't a comment */'??'/* ... but this is a comment */...
 
 "String literals have a similar pattern of escape sequences:        \
 You can escape \"these quotes\" like \"this\" and ??/"this??/"..."
+Additionally, there are also no comments in string literals.
 
 "So neither \"/*this*/\" nor ??/"/*this*/??/" constitutes a comment"
 /* ... but this is a comment. */
