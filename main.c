@@ -65,8 +65,11 @@ int main(void) {
                                                       break;
                                            case '\"': state = string_literal;
                                                       break;
-                                           case '/':  state = qmark_count == 2 ? root : possible_comment;
-                                                      goto contin;
+                                           case '/':  if (qmark_count != 2) {
+                                                          state = possible_comment;
+                                                          goto contin;
+                                                      }
+                                                      break;
                                        }
                                        break;
             case single_line_comment:  switch (c) {
