@@ -12,11 +12,12 @@ don't nest.
 In the days of K&R C, the block style of comment was the only style.
 
 /* This is a comment. */
+Block/**/comments/**/should/**/be/**/replaced/**/with/**/a/**/space.
 
 However, in this day and age, the single-line comment is also
 accepted in C.
-
 // This is a comment.
+Single-line comments should be replaced with a newline.
 
 C has line splices, which are backslashes immediately followed by   \
 newlines, and these can go anywhere in a C source file. The newline \
@@ -56,7 +57,7 @@ or character constant, it's the start of a comment.
 \
 ??/
 ??/
-* This, for example, is a comment.*\
+* This, for example, is a comment. ??? ??? ??? ??? ??? ??? ??? ??? *\
 ??/
 \
 \
@@ -74,6 +75,10 @@ or character constant, it's the start of a comment.
    comment, it's not to be stripped! These quotes, '\'', by the   ??/
    way, denote character constants. There are no comments in      ??/
    character constants.
+
+?????// This is not a comment
+
+/?????/ This is not a comment
 
 '/* This is not a comment. */'
 

@@ -27,23 +27,39 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define nelem(array) (sizeof array / sizeof *array)
+
+enum state { root,
+    possible_comment,
+    single_line_comment,
+    multi_line_comment,
+    possible_comment_end,
+    character_constant,
+    string_literal
+};
+
+int state_compare(const void *x, const void *y) {
+    const enum state *a = x, *b = y;
+    return (*a > *b) - (*b > *a);
+}
+
 int main(void) {
-    int c, trigraph = 0;
-    enum state { root,
-                 possible_comment,
-                 single_line_comment,
-                 multi_line_comment,
-                 possible_comment_end,
-                 character_constant,
-                 string_literal } state = root;
+    enum state state = root,
+               comment_state[] = { possible_comment,
+                                   single_line_comment,
+                                   multi_line_comment,
+                                   possible_comment_end };
 
     size_t old_hi_size, new_hi_size, splice_queue_size = 0, qmark_count = 0;
     unsigned char *splice_queue = NULL;
+    int c, trigraph = 0;
+
+    qsort(comment_state, nelem(comment_state), sizeof *comment_state, state_compare);
 
     for (;;) {
         c = getchar();
         if (c == '\?') {
-            if (qmark_count == 2) {
+            if (qmark_count == 2 && !bsearch(&state, comment_state, nelem(comment_state), sizeof *comment_state, state_compare)) {
                 putchar('\?');
                 continue;
             }
@@ -73,7 +89,7 @@ int main(void) {
                                        }
                                        break;
             case single_line_comment:  switch (c) {
-                                           case '/':  if (qmark_count != 2) {
+                                           case '/':  if (qmark_count < 2) {
                                                           goto contin;
                                                       }
                                            case '\\': c = getchar();
@@ -81,7 +97,8 @@ int main(void) {
                                                           ungetc(c, stdin);
                                                       }
                                                       goto contin;
-                                           case '\n': state = root;
+                                           case '\n': putchar('\n');
+                                                      state = root;
                                                       goto contin;
                                        }
             case multi_line_comment:   if (c == '*') {
@@ -90,8 +107,10 @@ int main(void) {
                                        goto contin;
             case possible_comment_end: switch (c) {
                                            case '/':  switch (qmark_count) {
-                                                          case 0: state = root;
+                                                          case 0: putchar(' ');
+                                                                  state = root;
                                                                   goto contin;
+                                                          default:
                                                           case 1: state = multi_line_comment;
                                                                   goto contin;
                                                           case 2: break;
@@ -138,6 +157,7 @@ int main(void) {
                                                           case 0: splice_queue_size = 0;
                                                                   state = single_line_comment;
                                                                   goto contin;
+                                                          default:
                                                           case 1: goto failure;
                                                           case 2: trigraph = 1;
                                                                   qmark_count = 0;
@@ -179,7 +199,10 @@ int main(void) {
                                                           puts((splice_queue[x / CHAR_BIT] & 1 << (x % CHAR_BIT)) ? "\?\?/" : "\\");
                                                       }
                                                       splice_queue_size = 0;
-                                                      printf("%.*s", (int) qmark_count, "\?\?");
+                                                      while (qmark_count > 0){
+                                                          putchar('\?');
+                                                          qmark_count--;
+                                                      }
                                                       state = root;
                                                       break;
                                        }
