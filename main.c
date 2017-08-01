@@ -50,7 +50,7 @@ int main(void) {
                                    multi_line_comment,
                                    possible_comment_end };
 
-    size_t old_hi_size, new_hi_size, splice_queue_size = 0, qmark_count = 0;
+    size_t splice_queue_size_hi = 0, splice_queue_size_lo = 0, qmark_count = 0;
     unsigned char *splice_queue = NULL;
     int c, trigraph = 0;
 
@@ -150,11 +150,11 @@ int main(void) {
                                        }
                                        break;
             case possible_comment:     switch (c) {
-                                           case '*':  splice_queue_size = 0;
+                                           case '*':  splice_queue_size_hi = splice_queue_size_lo = 0;
                                                       state = multi_line_comment;
                                                       goto contin;
                                            case '/':  switch (qmark_count) {
-                                                          case 0: splice_queue_size = 0;
+                                                          case 0: splice_queue_size_hi = splice_queue_size_lo = 0;
                                                                   state = single_line_comment;
                                                                   goto contin;
                                                           default:
@@ -176,29 +176,31 @@ int main(void) {
                                                           goto failure;
                                                       }
 
-                                                      old_hi_size = splice_queue_size / CHAR_BIT;
-                                                      new_hi_size = old_hi_size + 1;
-                                                      if ((old_hi_size & new_hi_size) == 0) {
-                                                          void *temp = realloc(splice_queue, old_hi_size + new_hi_size);
+                                                      if (!splice_queue_size_lo && (splice_queue_size_hi & -~splice_queue_size_hi) == 0) {
+                                                          void *temp = realloc(splice_queue, splice_queue_size_hi + -~splice_queue_size_hi);
                                                           if (temp == NULL) {
                                                               free(splice_queue);
                                                               perror("realloc");
                                                               return EXIT_FAILURE;
                                                           }
                                                           splice_queue = temp;
-                                                          memset(splice_queue + old_hi_size + (splice_queue_size % CHAR_BIT > 0), 0, new_hi_size - (splice_queue_size % CHAR_BIT > 0));
+                                                          memset(splice_queue + splice_queue_size_hi, 0, -~splice_queue_size_hi);
                                                       }
 
-                                                      splice_queue[old_hi_size] |= trigraph << (splice_queue_size % CHAR_BIT);
-                                                      splice_queue_size++;
+                                                      splice_queue[splice_queue_size_hi] |= trigraph << splice_queue_size_lo++;
+                                                      splice_queue_size_lo %= CHAR_BIT; 
+                                                      splice_queue_size_hi += !splice_queue_size_lo;
                                                       trigraph = 0;
                                                       goto contin;
                                            default:
                                            failure:   putchar('/');
-                                                      for (size_t x = 0; x < splice_queue_size; x++) {
-                                                          puts((splice_queue[x / CHAR_BIT] & 1 << (x % CHAR_BIT)) ? "\?\?/" : "\\");
+                                                      for (size_t hi = 0, lo = 0; hi < splice_queue_size_hi; lo++, lo %= CHAR_BIT, hi += !lo) {
+                                                          puts((splice_queue[hi] & 1 << lo) ? "\?\?/" : "\\");
                                                       }
-                                                      splice_queue_size = 0;
+                                                      for (size_t lo = 0; lo < splice_queue_size_lo; lo++) {
+                                                          puts((splice_queue[splice_queue_size_hi] & 1 << lo) ? "\?\?/" : "\\");
+                                                      }
+                                                      splice_queue_size_hi = splice_queue_size_lo = 0;
                                                       while (qmark_count > 0){
                                                           putchar('\?');
                                                           qmark_count--;
